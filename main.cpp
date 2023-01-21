@@ -55,12 +55,12 @@ int main() {
 
         //Wenn Temperatur höher wie 23°C.
         } else {
-            //Lüfter AN mit Wert von 1023.
+            //Lüfter AN mit Wert von 1023. 
             uBit.io.P0.setAnalogValue(1023);
             uBit.io.P0.setAnalogPeriod(100);
             //Rotes LED AN, Gelb/Grün AUS
             setLED( 1, 0, 0);
-            //Während Temperatur höher als 23° Piepst der Buzzer alle  0.5Sekunden.
+            //Funktion für den Buzzer mit einer Signallänge von 0.8Sek.
                 Buzzer(800);
                 }
             }
