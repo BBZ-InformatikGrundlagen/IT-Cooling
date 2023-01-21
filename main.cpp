@@ -1,96 +1,92 @@
-
 #include "MicroBit.h"
 
 MicroBit uBit;
 
-MicroBitButton buttonA (MICROBIT_PIN_BUTTON_A, MICROBIT_ID_BUTTON_A);
-MicroBitButton buttonB (MICROBIT_PIN_BUTTON_B, MICROBIT_ID_BUTTON_B);
+//Dem Microbit sagen, dass der Thermostat benutzt wird.
 MicroBitThermometer thermometer;
 
+//Funktion für die Temperaturnachfrage.
 void Temperatur();
-void Buzzer (int Volume);
+//Funktion für den Buzzer mit der frei zu wählenden Dauer des piepsens.
+void Buzzer (int dauer);
+//Funktion für LED ansteuerung, so muss nicht jedesmal uBit.io.Px.... eingegeben werden.
+void setLED (int rot, int gelb, int grün);
 
 int main() {
     uBit.init();
-
-    int temperature = 0;
-    int buzzerTone = 512;
-    int Motor = 900;
-    int Volume;
-    int wert;
-    
-    uBit.io.P13.isDigital();
-    uBit.io.P13.isInput();
-//Lüfter
+    //Lüfter Analoges Output
     uBit.io.P0.isOutput();
     uBit.io.P0.isAnalog();
-//Buzzer
+    //Buzzer Analoges Output
     uBit.io.P1.isOutput();
     uBit.io.P1.isAnalog();
-//LED - Rot
+    //LED - Rot Digitales Output
     uBit.io.P2.isOutput();
     uBit.io.P2.isDigital();
-//LED - Gelb
+    //LED - Gelb Digitales Output
     uBit.io.P8.isOutput();
     uBit.io.P8.isDigital();
-//LED - Grün
+    //LED - Grün Digitales Output
     uBit.io.P12.isOutput();
     uBit.io.P12.isDigital();
 
-
-while(1){
+    while(1) {
         
-        temperature = (thermometer.getTemperature());
+        // "temp" definieren als Temperatur.
+        int temp = uBit.thermometer.getTemperature();
+        //Temperatur wiedergabe auf Display.
+            Temperatur();
+        // Wenn Temperatur tiefer/gleich wie 21°C
+        if (temp <= 21) {
+            //Grünes LED AN, Rot/Gelb AUS.
+            setLED( 0, 0, 1);
+            // Lüfter & Buzzer AUS.
+            uBit.io.P0.setAnalogValue(0);
+            uBit.io.P1.setAnalogValue(0);
 
-    if (temperature < 21){
-        Temperatur();
-        uBit.io.P0.setAnalogValue(0);
-        uBit.io.P1.setAnalogValue(0);
-        uBit.io.P2.setDigitalValue(0);
-        uBit.io.P8.setDigitalValue(0);
-        uBit.io.P12.setDigitalValue(1);
+        //Wenn Temperatur Höher als 21°C UND tiefer/gleich wie 23°C
+        } else if (temp > 21 && temp <= 23) {
+            //Gelbes LED AN, Rot/Grün AUS.
+            setLED( 0, 1, 0);
+            // Lüfter & Buzzer AUS.
+            uBit.io.P0.setAnalogValue(300);
+            uBit.io.P0.setAnalogPeriod(100);
+            uBit.io.P1.setAnalogValue(0);
 
-    } else if (temperature >22){
-        while (thermometer.getTemperature() > 22) {
-            uBit.display.print(thermometer.getTemperature());
+        //Wenn Temperatur höher wie 23°C.
+        } else {
+            //Lüfter AN mit Wert von 1023.
             uBit.io.P0.setAnalogValue(1023);
-            Buzzer(500);
-}
-        wert = uBit.io.P13.getDigitalValue();
-        uBit.display.print(wert);
-        if(wert==1){
-            uBit.display.print("HEY");
+            uBit.io.P0.setAnalogPeriod(100);
+            //Rotes LED AN, Gelb/Grün AUS
+            setLED( 1, 0, 0);
+            //Während Temperatur höher als 23° Piepst der Buzzer alle  0.5Sekunden.
+                Buzzer(800);
+                }
+            }
+        uBit.sleep(200);
         }
-        Temperatur();
-        uBit.io.P0.setAnalogValue(1023);
-        Buzzer(300);
-        uBit.io.P2.setDigitalValue(1);
-        uBit.io.P8.setDigitalValue(0);
-        uBit.io.P12.setDigitalValue(0);
-        
-
-    } else {
-        Temperatur();
-        uBit.io.P0.setAnalogValue(0);
-        uBit.io.P1.setAnalogValue(0);
-        uBit.io.P2.setDigitalValue(0);
-        uBit.io.P8.setDigitalValue(1);
-        uBit.io.P12.setDigitalValue(0);
-    }
-}
-
-    release_fiber();
-    }
-
+    
+    
+//Funktion Temperatur.
 void Temperatur () {
     uBit.display.scroll (thermometer.getTemperature());}
 
-void Buzzer (int Volume){
-     uBit.io.P0.setAnalogValue(1023);
+//Funktion Buzzer.
+void Buzzer (int dauer){
+    uBit.thermometer.getTemperature();
     uBit.io.P1.setAnalogValue(512);
     uBit.io.P1.setAnalogPeriod(1);
-    uBit.sleep(Volume);
-    uBit.io.P0.setAnalogValue(1023);
+    Temperatur();
+    uBit.sleep(dauer);
     uBit.io.P1.setAnalogValue(0);
     uBit.io.P1.setAnalogPeriod(0);
+    uBit.sleep(dauer);
+    uBit.thermometer.getTemperature();
 }
+
+//Funktion LED.
+void setLED(int rot, int gelb, int grün){
+    uBit.io.P2.setDigitalValue(rot);
+    uBit.io.P8.setDigitalValue(gelb);
+    uBit.io.P12.setDigitalValue(grün);}
